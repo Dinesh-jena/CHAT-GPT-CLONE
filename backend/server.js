@@ -1,7 +1,7 @@
 require("dotenv").config();
-const app = require("./src/app")
+const app = require("./src/app");
 const connectDb = require("./src/db/db");
-const initSocketserver = require('./src/sockets/socket.server')
+const initSocketserver = require('./src/sockets/socket.server');
 const httpServer = require('http').createServer(app);
 
 connectDb();
