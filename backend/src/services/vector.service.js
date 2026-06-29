@@ -10,12 +10,13 @@ const ChatGptCloneIndex = pc.Index(
     process.env.PINECONE_INDEX_NAME,
     process.env.PINECONE_HOST
 );
-console.log(ChatGptCloneIndex);
+// console.log(ChatGptCloneIndex);
 
 
 async function createMemory({vectors,metadata,messageId}){
 
-        console.log("Vectors:", vectors);
+  
+        // console.log("Vectors:", vectors);
 //     await ChatGptCloneIndex.upsert({
 //   vectors: [
 //     {
@@ -27,7 +28,7 @@ async function createMemory({vectors,metadata,messageId}){
 // });
 
 
-console.log("Vector Length:", vectors.length);
+// console.log("Vector Length:", vectors.length);
 
     const record = {
         id: String(messageId),
@@ -35,7 +36,10 @@ console.log("Vector Length:", vectors.length);
         metadata
     };
     
-    await ChatGptCloneIndex.upsert([record]);
+
+    await ChatGptCloneIndex.upsert({
+        records: [record]
+    });
 }
 
 
@@ -45,7 +49,7 @@ async function queryMemory({queryVector, limit = 5,metadata}) {
     const data = await ChatGptCloneIndex.query({
          vector:queryVector,
          topK: limit,
-         filter: metadata || undefined,
+         filter: metadata ? {metadata} : undefined,
          includeMetadata: true
     })
 
