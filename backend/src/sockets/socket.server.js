@@ -73,15 +73,26 @@ function initSocketserver(httpServer) {
           .lean()
       ).reverse();
 
-
-      const responce = await aiService.generateResponse(
-        chatHistory.map((item) => {
+      const stm = chatHistory.map((item) => {
           return {
             role: item.role,
             parts: [{ text: item.content }],
           };
-        }),
-      );
+        })
+
+        const ltm = [
+          {
+            role:'user',
+            parts:[{
+              text:`
+              these are soe previous messages from the chat , use them to genrate a responce
+              ${memory.map(item => item.metadata.text).join("\n")}
+            `}]
+          }
+        ]
+        
+        console.log([...ltm,...stm]);
+      const responce = await aiService.generateResponse([...ltm,...stm]);
       // console.log(responce);
 
       const responceMessage = await messageModel.create({
@@ -103,8 +114,6 @@ function initSocketserver(httpServer) {
           },
         });
       
-
-
       socket.emit("ai-response", {
         content: responce,
         chat: messagePayload.content,

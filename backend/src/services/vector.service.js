@@ -13,7 +13,7 @@ const ChatGptCloneIndex = pc.Index(
 // console.log(ChatGptCloneIndex);
 
 
-async function createMemory({vectors,metadata,messageId}){
+async function createMemory({vectors,metadata,messageId  }){
 
   
         // console.log("Vectors:", vectors);
