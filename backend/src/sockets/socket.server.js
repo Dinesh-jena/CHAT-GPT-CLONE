@@ -7,7 +7,14 @@ const messageModel = require("../models/message.model");
 const { createMemory, queryMemory } = require("../services/vector.service");
 
 function initSocketserver(httpServer) {
-  const io = new Server(httpServer, {});
+  const io = new Server(httpServer, {
+    cors:{
+      origin: "http://localhost:5173",
+      methods: ["GET", "POST"],
+      allowedHeaders: ["Content-Type"],
+      credentials: true
+    }
+  });
 
   io.use(async (socket, next) => {
     const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
@@ -34,28 +41,7 @@ function initSocketserver(httpServer) {
     socket.on("ai-message", async (messagePayload) => {
       
       /* messagePayload = { chat:chatId,content:message text } */
-
-      /*
-      const message = await messageModel.create({
-          chat:messagePayload.chat,
-          user:socket.user._id,
-          content:messagePayload.content,
-          role:"user"
-      })
-
-      const vectors = await aiService.generateVector(messagePayload.content);
-
-         await createMemory({
-          vectors,
-          messageId: message._id,
-          metadata: {
-            chat: messagePayload.chat,
-            user: socket.user._id,
-            text:messagePayload.content
-          },
-        });
-      */
-
+      console.log("Received ai-message:", messagePayload);
       //Optimize code 
       const [message,vectors] = await Promise.all([
         messageModel.create({
@@ -77,24 +63,9 @@ function initSocketserver(httpServer) {
           },
         });
 
-      /*
-      const memory = await queryMemory({
-        queryVector: vectors,
-        limit: 3,
-        metadata:{}
-      })
 
     
-      const chatHistory = (
-        await messageModel
-          .find({
-            chat: messagePayload.chat,
-          })
-          .sort({ createdAt: -1 })
-          .limit(20)
-          .lean()
-      ).reverse();
-      */
+   
 
       const [memory, chatHistory] = await Promise.all([
 
@@ -107,7 +78,7 @@ function initSocketserver(httpServer) {
          messageModel
           .find({
             chat: messagePayload.chat,
-          }).sort({ createdAt: -1 }).limit(20).lean()
+          }).sort({ createdAt: 1 }).limit(20).lean()
       ])
 
           //stm-->shot term memory.
@@ -131,11 +102,11 @@ function initSocketserver(httpServer) {
         
         console.log([...ltm,...stm]);
       const responce = await aiService.generateResponse([...ltm,...stm]);
-      // console.log(responce);
+      console.log('AI response generated:', responce);
 
       socket.emit("ai-response", {
         content: responce,
-        chat: messagePayload.content,
+        chat: messagePayload.chat,
       });
 
       const [ responceMessage,responceVector] = await Promise.all([
@@ -147,17 +118,6 @@ function initSocketserver(httpServer) {
         }),
         aiService.generateVector(responce)
       ]) 
-
-      /*
-      const responceMessage = await messageModel.create({
-        chat: messagePayload.chat,
-        user: socket.user._id,
-        content: responce,
-        role: "model",
-      });
-
-      const responceVector = await aiService.generateVector(responce);
-      */
 
       await createMemory({
           vectors: responceVector,

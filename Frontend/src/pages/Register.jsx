@@ -3,98 +3,83 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const Register = () => {
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const navigate = useNavigate();
-  
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-    if (password !== confirmPassword) {
-      alert('Passwords do not match.')
-      return
+    const [ form, setForm ] = useState({ email: '', firstname: '', lastname: '', password: '' });
+    const [ submitting, setSubmitting ] = useState(false);
+    const navigate = useNavigate();
+
+
+    function handleChange(e) {
+        const { name, value } = e.target;
+        setForm(f => ({ ...f, [ name ]: value }));
     }
-    axios.post('http://localhost:3000/api/auth/register', {
-      email:email,
-      fullName:{
-        firstname:firstName,
-        lastname:lastName
-      },
-      password:password
-    }, { withCredentials: true })
-    .then((response) => {
-      navigate('/');
-    })
-    .catch((error) => {
-      console.error('Registration error:', error);
-      alert('Registration failed. Please try again.');
-    });
-  }
 
-  return (
-    <div className="page-container">
-      <h1>Register</h1>
-      <p>Create your account with first name, last name, email, and password.</p>
-      <form className="auth-form" onSubmit={handleSubmit}>
-        <label>
-          First name
-          <input
-            type="text"
-            value={firstName}
-            onChange={(event) => setFirstName(event.target.value)}
-            placeholder="First name"
-            required
-          />
-        </label>
-        <label>
-          Last name
-          <input
-            type="text"
-            value={lastName}
-            onChange={(event) => setLastName(event.target.value)}
-            placeholder="Last name"
-            required
-          />
-        </label>
-        <label>
-          Email address
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            required
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Create a password"
-            required
-          />
-        </label>
-        <label>
-          Confirm password
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Confirm your password"
-            required
-          />
-        </label>
-        <button type="submit">Register</button>
-      </form>
-      <p className="small-text">
-        Already registered? <Link to="/login">Login here</Link>.
-      </p>
-    </div>
-  )
-}
+    async function handleSubmit(e) {
+        e.preventDefault();
+        setSubmitting(true);
+        console.log(form);
 
-export default Register
+        axios.post("http://localhost:3000/api/auth/register", {
+            email: form.email,
+            fullName: {
+                firstName: form.firstname,
+                lastName: form.lastname
+            },
+            password: form.password
+        }, {
+            withCredentials: true
+        }).then((res) => {
+            console.log(res);
+            navigate("/");
+        }).catch((err) => {
+            console.error(err);
+            alert('Registration failed (placeholder)');
+        })
+
+        try {
+            // Placeholder: integrate real registration logic / API call.
+
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    return (
+        <div className="center-min-h-screen">
+            <div className="auth-card" role="main" aria-labelledby="register-heading">
+                <header className="auth-header">
+                    <h1 id="register-heading">Create account</h1>
+                    <p className="auth-sub">Join us and start exploring.</p>
+                </header>
+                <form className="auth-form" onSubmit={handleSubmit} noValidate>
+                    <div className="field-group">
+                        <label htmlFor="email">Email</label>
+                        <input id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={handleChange} required />
+                    </div>
+                    <div className="grid-2">
+                        <div className="field-group">
+                            <label htmlFor="firstname">First name</label>
+                            <input id="firstname" name="firstname" placeholder="Jane" value={form.firstname} onChange={handleChange} required />
+                        </div>
+                        <div className="field-group">
+                            <label htmlFor="lastname">Last name</label>
+                            <input id="lastname" name="lastname" placeholder="Doe" value={form.lastname} onChange={handleChange} required />
+                        </div>
+                    </div>
+                    <div className="field-group">
+                        <label htmlFor="password">Password</label>
+                        <input id="password" name="password" type="password" autoComplete="new-password" placeholder="Create a password" value={form.password} onChange={handleChange} required minLength={6} />
+                    </div>
+                    <button type="submit" className="primary-btn" disabled={submitting}>
+                        {submitting ? 'Creating...' : 'Create Account'}
+                    </button>
+                </form>
+                <p className="auth-alt">Already have an account? <Link to="/login">Sign in</Link></p>
+            </div>
+        </div>
+    );
+};
+
+export default Register;
+

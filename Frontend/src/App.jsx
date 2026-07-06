@@ -1,9 +1,11 @@
-import React from 'react'
-import AppRoutes from './AppRoutes'
-import './styles/theme.css'
-import './App.css'
+import { useState } from 'react'
 
-const App = () => {
+import './App.css'
+import AppRoutes from './AppRoutes'
+
+function App() {
+
+
   return (
     <>
       <AppRoutes />

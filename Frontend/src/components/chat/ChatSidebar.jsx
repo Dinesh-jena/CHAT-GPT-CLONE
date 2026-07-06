@@ -1,34 +1,31 @@
-import React from 'react'
-import './ChatSidebar.css'
+import React from 'react';
+import './ChatSidebar.css';
 
-const ChatSidebar = ({ chats, activeChatId, onSelectChat, onNewChat, sidebarOpen }) => {
+
+const ChatSidebar = ({ chats, activeChatId, onSelectChat, onNewChat, open }) => {
+
+
+  
   return (
-    <aside className={`home-sidebar ${sidebarOpen ? 'open' : ''}`}>
+    <aside className={"chat-sidebar " + (open ? 'open' : '')} aria-label="Previous chats">
       <div className="sidebar-header">
-        <div>
-          <p className="eyebrow">Workspace</p>
-          <h2>Aurora chat</h2>
-        </div>
-        <button type="button" className="ghost-btn" onClick={onNewChat}>
-          + New
-        </button>
+        <h2>Chats</h2>
+        <button className="small-btn" onClick={onNewChat}>New</button>
       </div>
-
-      <div className="chat-list">
-        {chats.map((chat) => (
+      <nav className="chat-list" aria-live="polite">
+        {chats.map(c => (
           <button
-            key={chat.id}
-            type="button"
-            className={`chat-item ${chat.id === activeChatId ? 'active' : ''}`}
-            onClick={() => onSelectChat(chat)}
+            key={c._id}
+            className={"chat-list-item " + (c._id === activeChatId ? 'active' : '')}
+            onClick={() => onSelectChat(c._id)}
           >
-            <span className="chat-title">{chat.title}</span>
-            <span className="chat-meta">Tap to open</span>
+            <span className="title-line">{c.title}</span>
           </button>
         ))}
-      </div>
+        {chats.length === 0 && <p className="empty-hint">No chats yet.</p>}
+      </nav>
     </aside>
-  )
-}
+  );
+};
 
-export default ChatSidebar
+export default ChatSidebar;

@@ -1,159 +1,228 @@
-import React, { useState } from 'react'
-import ChatHeader from '../components/chat/ChatHeader'
-import ChatSidebar from '../components/chat/ChatSidebar'
-import Composer from '../components/chat/Composer'
-import MessageList from '../components/chat/MessageList'
-
-const createSeedChats = () => [
-  {
-    id: 'welcome',
-    title: 'Welcome chat',
-    messages: [
-      {
-        id: 1,
-        role: 'assistant',
-        content: 'Hey, DINESH. Ready to dive in?',
-      },
-    ],
-  },
-  {
-    id: 'planning',
-    title: 'Project planning',
-    messages: [
-      {
-        id: 2,
-        role: 'assistant',
-        content: 'I can help you shape ideas, break them into steps, or draft a clean plan.',
-      },
-    ],
-  },
-  {
-    id: 'design',
-    title: 'UI inspiration',
-    messages: [
-      {
-        id: 3,
-        role: 'assistant',
-        content: 'I can also help with UI copy, flow ideas, and polished conversation prompts.',
-      },
-    ],
-  },
-]
-
-const getAssistantReply = (message) => {
-  const normalized = message.toLowerCase()
-
-  if (normalized.includes('hello') || normalized.includes('hi')) {
-    return 'Hello! I’m Aurora. What would you like to build or explore today?'
-  }
-
-  if (normalized.includes('react') || normalized.includes('vite')) {
-    return 'React and Vite make a strong combo for fast UI development. I can help with components, state, or routing.'
-  }
-
-  if (normalized.includes('idea') || normalized.includes('brainstorm')) {
-    return 'Absolutely — I can turn a rough idea into a clear plan, a prompt, or a feature outline.'
-  }
-
-  return 'That sounds interesting. I can help you refine the idea, break it into steps, or turn it into something actionable.'
-}
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { io } from "socket.io-client";
+import ChatMobileBar from '../components/chat/ChatMobileBar.jsx';
+import ChatSidebar from '../components/chat/ChatSidebar.jsx';
+import ChatMessages from '../components/chat/ChatMessages.jsx';
+import ChatComposer from '../components/chat/ChatComposer.jsx';
+import '../components/chat/ChatLayout.css';
+import { fakeAIReply } from '../components/chat/aiClient.js';
+import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
+import {
+  ensureInitialChat,
+  startNewChat,
+  selectChat,
+  setInput,
+  sendingStarted,
+  sendingFinished,
+  addUserMessage,
+  addAIMessage,
+  setChats
+} from '../store/chatSlice.js';
 
 const Home = () => {
-  const [previousChats, setPreviousChats] = useState(createSeedChats())
-  const [activeChatId, setActiveChatId] = useState('welcome')
-  const [messages, setMessages] = useState(createSeedChats()[0].messages)
-  const [input, setInput] = useState('')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const dispatch = useDispatch();
+  const chats = useSelector(state => state.chat.chats);
+  const activeChatId = useSelector(state => state.chat.activeChatId);
+  const input = useSelector(state => state.chat.input);
+  const isSending = useSelector(state => state.chat.isSending);
+  const [ sidebarOpen, setSidebarOpen ] = React.useState(false);
+  const socketRef = useRef(null);
+  const [ socketConnected, setSocketConnected ] = useState(false);
 
-  const activeChat = previousChats.find((chat) => chat.id === activeChatId) || previousChats[0]
+  const activeChat = chats.find(c => c._id === activeChatId || c.id === activeChatId) || null;
 
-  const createNewChat = () => {
-    const newChat = {
-      id: Date.now().toString(),
-      title: 'New chat',
-      messages: [
-        {
-          id: Date.now(),
-          role: 'assistant',
-          content: 'Started a fresh conversation. What would you like to explore?',
-        },
-      ],
-    }
+  const [ messages, setMessages ] = useState([
+    // {
+    //   type: 'user',
+    //   content: 'Hello, how can I help you today?'
+    // },
+    // {
+    //   type: 'ai',
+    //   content: 'Hi there! I need assistance with my account.'
+    // }
+  ]);
 
-    setPreviousChats((prev) => [newChat, ...prev])
-    setActiveChatId(newChat.id)
-    setMessages(newChat.messages)
-    setSidebarOpen(false)
+  const handleNewChat = async () => {
+    // Prompt user for title of new chat, fallback to 'New Chat'
+    let title = window.prompt('Enter a title for the new chat:', '');
+    if (title) title = title.trim();
+    if (!title) return
+
+    const response = await axios.post("http://localhost:3000/api/chat", {
+      title
+    }, {
+      withCredentials: true
+    })
+    getMessages(response.data.chat._id);
+    dispatch(startNewChat(response.data.chat));
+    setSidebarOpen(false);
   }
 
-  const handleSelectChat = (chat) => {
-    setActiveChatId(chat.id)
-    setMessages(chat.messages)
-    setSidebarOpen(false)
-  }
+  // Ensure at least one chat exists initially
+  useEffect(() => {
 
-  const handleSendMessage = (event) => {
-    event.preventDefault()
+    axios.get("http://localhost:3000/api/chat", { withCredentials: true })
+      .then(response => {
+        const chats = response.data.chats.reverse();
+        dispatch(setChats(chats));
+        if (chats.length > 0 && !activeChatId) {
+          const firstChat = chats[0];
+          dispatch(selectChat(firstChat._id));
+          getMessages(firstChat._id);
+        }
+      })
 
-    const trimmed = input.trim()
-    if (!trimmed) return
+    const tempSocket = io("http://localhost:3000", {
+      withCredentials: true,
+      transports: ["websocket"],
+    });
 
-    const userMessage = {
-      id: Date.now(),
+    tempSocket.on("connect", () => {
+      console.log("Socket connected", tempSocket.id);
+      setSocketConnected(true);
+    });
+    tempSocket.on("connect_error", (error) => {
+      console.error("Socket connect error:", error);
+    });
+    tempSocket.on("disconnect", (reason) => {
+      console.warn("Socket disconnected:", reason);
+      setSocketConnected(false);
+    });
+
+    tempSocket.on("ai-response", (messagePayload) => {
+      console.log("Received AI response:", messagePayload);
+
+      const responseText = typeof messagePayload?.content === 'string'
+        ? messagePayload.content
+        : String(messagePayload?.content || '');
+
+      if (!responseText) {
+        console.warn('AI response payload had no content:', messagePayload);
+        dispatch(sendingFinished());
+        return;
+      }
+
+      setMessages((prevMessages) => [ ...prevMessages, {
+        type: 'ai',
+        role: 'ai',
+        content: responseText
+      } ]);
+
+      dispatch(sendingFinished());
+    });
+
+    socketRef.current = tempSocket;
+
+    return () => {
+      tempSocket.off("connect");
+      tempSocket.off("connect_error");
+      tempSocket.off("disconnect");
+      tempSocket.off("ai-response");
+      tempSocket.close();
+    };
+
+  }, []);
+
+  const sendMessage = async () => {
+
+    const trimmed = input.trim();
+    console.log("Sending message:", trimmed);
+    if (!trimmed || !activeChatId || isSending) return;
+    dispatch(sendingStarted());
+
+    const newMessages = [ ...messages, {
+      type: 'user',
       role: 'user',
-      content: trimmed,
+      content: trimmed
+    } ];
+
+    console.log("New messages:", newMessages);
+
+    setMessages(newMessages);
+    dispatch(setInput(''));
+
+    const socket = socketRef.current;
+    console.log('Sending ai-message over socket:', { chat: activeChatId, content: trimmed, connected: socket?.connected });
+    if (socket && socket.connected) {
+      socket.emit("ai-message", {
+        chat: activeChatId,
+        content: trimmed
+      });
+    } else {
+      console.error('Socket not connected.');
+      dispatch(sendingFinished());
     }
 
-    const assistantMessage = {
-      id: Date.now() + 1,
-      role: 'assistant',
-      content: getAssistantReply(trimmed),
-    }
-
-    const nextMessages = [...messages, userMessage, assistantMessage]
-
-    setMessages(nextMessages)
-    setInput('')
-
-    setPreviousChats((prev) =>
-      prev.map((chat) =>
-        chat.id === activeChatId
-          ? {
-              ...chat,
-              title: chat.title === 'New chat' ? trimmed.slice(0, 28) : chat.title,
-              messages: nextMessages,
-            }
-          : chat,
-      ),
-    )
+    // try {
+    //   const reply = await fakeAIReply(trimmed);
+    //   dispatch(addAIMessage(activeChatId, reply));
+    // } catch {
+    //   dispatch(addAIMessage(activeChatId, 'Error fetching AI response.', true));
+    // } finally {
+    //   dispatch(sendingFinished());
+    // }
   }
 
-  return (
-    <div className="home-shell">
-      <ChatSidebar
-        chats={previousChats}
-        activeChatId={activeChatId}
-        onSelectChat={handleSelectChat}
-        onNewChat={createNewChat}
-        sidebarOpen={sidebarOpen}
-      />
+  const getMessages = async (chatId) => {
 
-      <main className="home-main">
-        <ChatHeader
-          title={activeChat?.title || 'New chat'}
-          onToggleHistory={() => setSidebarOpen((prev) => !prev)}
-        />
+   const response = await  axios.get(`http://localhost:3000/api/chat/messages/${chatId}`, { withCredentials: true })
 
-        <MessageList messages={messages} />
+   console.log("Fetched messages:", response.data.messages);
 
-        <Composer
+   setMessages(response.data.messages.map(m => ({
+     type: m.role === 'user' ? 'user' : 'ai',
+     role: m.role === 'user' ? 'user' : 'ai',
+     content: m.content
+   })));
+
+  }
+
+
+return (
+  <div className="chat-layout minimal">
+    <ChatMobileBar
+      onToggleSidebar={() => setSidebarOpen(o => !o)}
+      onNewChat={handleNewChat}
+    />
+    <ChatSidebar
+      chats={chats}
+      activeChatId={activeChatId}
+      onSelectChat={(id) => {
+        dispatch(selectChat(id));
+        setSidebarOpen(false);
+        getMessages(id);
+      }}
+      onNewChat={handleNewChat}
+      open={sidebarOpen}
+    />
+    <main className="chat-main" role="main">
+      {messages.length === 0 && (
+        <div className="chat-welcome" aria-hidden="true">
+          <div className="chip">Early Preview</div>
+          <h1>ChatGPT Clone</h1>
+          <p>Ask anything. Paste text, brainstorm ideas, or get quick explanations. Your chats stay in the sidebar so you can pick up where you left off.</p>
+        </div>
+      )}
+      <ChatMessages messages={messages} isSending={isSending} />
+      {
+        activeChatId &&
+        <ChatComposer
           input={input}
-          onInputChange={(event) => setInput(event.target.value)}
-          onSubmit={handleSendMessage}
-        />
-      </main>
-    </div>
-  )
-}
+          setInput={(v) => dispatch(setInput(v))}
+          onSend={sendMessage}
+          isSending={isSending}
+        />}
+    </main>
+    {sidebarOpen && (
+      <button
+        className="sidebar-backdrop"
+        aria-label="Close sidebar"
+        onClick={() => setSidebarOpen(false)}
+      />
+    )}
+  </div>
+);
+};
 
-export default Home
+export default Home;

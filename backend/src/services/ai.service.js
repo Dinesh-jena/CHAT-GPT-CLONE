@@ -202,12 +202,16 @@ Your goal is to make every conversation helpful, enjoyable, and easy to understa
                  `,
       },
     });
-
+    console.dir(response.candidates, { depth: null });
+//     console.log(response);
+// console.log("response.text =", response.text);
+// console.log("typeof =", typeof response.text);
     return response.text;
   } catch (error) {
     console.error("Gemini Error:", error.message);
     return "Gemini quota exceeded.";
   }
+
 }
 
 async function generateVector(content) {
