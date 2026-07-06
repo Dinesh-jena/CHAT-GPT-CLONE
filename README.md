@@ -394,3 +394,54 @@ Today's milestone was successfully connecting the frontend with the backend usin
 
 **Project:** MERN Stack Authentication System 🚀
 
+# Day 06 – ChatGPT Clone (Project Completed) 🎉
+
+## 🚀 Overview
+
+Successfully completed my **first full-stack MERN ChatGPT Clone with AI integration**.
+
+This project helped me gain practical experience in building a real-time AI-powered application while solving multiple frontend and backend integration challenges.
+
+## ✅ Work Completed
+
+* Fixed CORS configuration between frontend and backend.
+* Resolved Axios and Fetch API request issues.
+* Fixed Socket.IO communication and API response flow.
+* Improved the basic UI and user experience.
+* Debugged frontend-backend integration.
+* Performed final testing of all features.
+* Completed the entire project successfully.
+
+## 🛠️ Tech Stack
+
+* React.js
+* Node.js
+* Express.js
+* MongoDB
+* Socket.IO
+* Google Gemini API
+
+## 📚 What I Learned
+
+* Configuring CORS correctly.
+* Handling API requests using Axios and Fetch.
+* Debugging frontend and backend communication.
+* Managing real-time messaging with Socket.IO.
+* Integrating AI into a MERN application.
+* Solving real-world development and debugging challenges.
+
+## 🎯 Outcome
+
+✅ Successfully completed my first AI-powered MERN Stack project.
+
+This project strengthened my understanding of:
+
+* Full-Stack MERN Development
+* REST APIs
+* Real-time Communication
+* AI Integration
+* Debugging & Problem Solving
+
+More exciting projects are coming soon! 🚀
+
+
