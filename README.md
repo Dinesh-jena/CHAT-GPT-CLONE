@@ -295,3 +295,102 @@
 - ✅ Promise.all() Optimization Implemented
 - ✅ STM + LTM Integration Completed
 - ✅ AI Workflow Improved
+
+# 🚀 Day 05 – Frontend Authentication & API Integration
+
+## 📅 Progress Update
+
+Today, I focused on building the frontend of my MERN Stack project and successfully connected it with the backend APIs. This was an important milestone because the complete authentication flow is now working smoothly between the frontend and backend.
+
+---
+
+## ✅ What I Built
+
+### 🖥️ Frontend Pages
+
+* 🏠 Home Page
+* 🔐 Login Page
+* 📝 Register Page
+
+---
+
+## ⚙️ Technologies Used
+
+* React.js
+* React Router DOM
+* Axios
+* Node.js
+* Express.js
+* MongoDB
+* CORS Middleware
+
+---
+
+## 🎯 Features Implemented
+
+* Created a multi-page React application.
+* Configured **React Router DOM** for client-side navigation.
+* Integrated **Axios** for API communication.
+* Connected the frontend with the backend authentication APIs.
+* Successfully implemented:
+
+  * User Registration
+  * User Login
+* Configured **CORS** middleware for secure frontend-backend communication.
+* Verified successful API requests and responses.
+* Authentication token is generated and stored successfully after login.
+
+---
+
+## 💡 What I Learned
+
+* How React Router DOM manages navigation between pages.
+* Making HTTP requests using Axios.
+* Connecting React applications with Express APIs.
+* Handling backend responses on the frontend.
+* Managing authentication flow between frontend and backend.
+* Understanding how CORS enables secure cross-origin API communication.
+* Working with authentication tokens after successful login.
+
+---
+
+## 🛠️ Practical Experience
+
+* Built a complete authentication UI.
+* Connected frontend forms with backend APIs.
+* Tested Register and Login functionality.
+* Verified API communication using backend responses.
+* Successfully completed end-to-end authentication flow.
+
+---
+
+## 📈 Progress
+
+```
+Frontend Development     ██████████ 100%
+React Router DOM         ██████████ 100%
+Axios Integration        ██████████ 100%
+Authentication APIs      ██████████ 100%
+Frontend ↔ Backend Sync  ██████████ 100%
+```
+
+---
+
+## 🚀 Next Goal
+
+* Protected Routes
+* User Dashboard
+* Authentication Persistence
+* Logout Functionality
+* Profile Management
+* Route Guards
+* Better UI & Error Handling
+
+---
+
+## 💬 Day 05 Summary
+
+Today's milestone was successfully connecting the frontend with the backend using authentication APIs. The Register and Login functionalities are working correctly, API communication is successful, and authentication tokens are being stored properly. This marks another important step in my journey toward becoming a proficient MERN Stack Developer.
+
+**Project:** MERN Stack Authentication System 🚀
+
